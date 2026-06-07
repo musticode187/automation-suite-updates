@@ -28,11 +28,24 @@ From this local checkout:
 ./scripts/publish_release.sh
 ```
 
-The script expects current portable ZIPs in the three private working checkouts:
+Recommended local layout:
 
-- `/Users/mustafakazhai/Downloads/beilagen-video-automation/dist/`
-- `/Users/mustafakazhai/Downloads/produktclips-native-automation/dist/`
-- `/Users/mustafakazhai/Downloads/newsletter-grafiken-automation/dist/`
+```text
+~/Documents/GitHub/
+  automation-suite-updates/
+  beilagen-video-automation/
+  produktclips-native-automation/
+  newsletter-grafiken-automation/
+```
+
+The script expects current portable ZIPs in the sibling private working
+checkouts under `../<repo>/dist/`. If your local layout is different, set
+`REPOS_BASE` or pass explicit ZIP paths:
+
+```bash
+REPOS_BASE="$HOME/Documents/GitHub" ./scripts/publish_release.sh
+BEILAGEN_ZIP="/path/to/beilagen.zip" ./scripts/publish_release.sh
+```
 
 It copies the newest portable package for each module into stable asset names,
 generates `version.json` with SHA-256 checksums, and creates or updates the
@@ -45,4 +58,3 @@ latest GitHub Release.
 - SHA-256 checksums in `version.json` protect against incomplete or wrong
   downloads.
 - No GitHub token is embedded in any shipped app.
-

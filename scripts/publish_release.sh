@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 REPO="${REPO:-musticode187/automation-suite-updates}"
 TAG="${TAG:-suite-$(date '+%Y.%m.%d-%H%M')}"
 ASSETS_DIR="$ROOT_DIR/release_assets"
+REPOS_BASE="${REPOS_BASE:-$(cd "$ROOT_DIR/.." && pwd)}"
 
 latest_zip(){
   local dir="$1"
@@ -14,9 +15,9 @@ latest_zip(){
     | head -n 1
 }
 
-BEILAGEN_ZIP="${BEILAGEN_ZIP:-$(latest_zip /Users/mustafakazhai/Downloads/beilagen-video-automation/dist 'beilagen-video-automation_portable_*.zip')}"
-PRODUKTCLIPS_ZIP="${PRODUKTCLIPS_ZIP:-$(latest_zip /Users/mustafakazhai/Downloads/produktclips-native-automation/dist 'produktclips-native-automation_portable_*.zip')}"
-NEWSLETTER_ZIP="${NEWSLETTER_ZIP:-$(latest_zip /Users/mustafakazhai/Downloads/newsletter-grafiken-automation/dist 'newsletter-grafiken-automation_portable_*.zip')}"
+BEILAGEN_ZIP="${BEILAGEN_ZIP:-$(latest_zip "$REPOS_BASE/beilagen-video-automation/dist" 'beilagen-video-automation_portable_*.zip')}"
+PRODUKTCLIPS_ZIP="${PRODUKTCLIPS_ZIP:-$(latest_zip "$REPOS_BASE/produktclips-native-automation/dist" 'produktclips-native-automation_portable_*.zip')}"
+NEWSLETTER_ZIP="${NEWSLETTER_ZIP:-$(latest_zip "$REPOS_BASE/newsletter-grafiken-automation/dist" 'newsletter-grafiken-automation_portable_*.zip')}"
 
 for file in "$BEILAGEN_ZIP" "$PRODUKTCLIPS_ZIP" "$NEWSLETTER_ZIP"; do
   if [ ! -f "$file" ]; then
@@ -74,4 +75,3 @@ fi
 
 echo "Published: https://github.com/$REPO/releases/tag/$TAG"
 echo "Manifest: https://github.com/$REPO/releases/latest/download/version.json"
-

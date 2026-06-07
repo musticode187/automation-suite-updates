@@ -3,6 +3,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import zipfile
 from pathlib import Path
 
 
@@ -38,6 +39,18 @@ def download_url(repo: str, asset_name: str) -> str:
     return f"https://github.com/{repo}/releases/latest/download/{asset_name}"
 
 
+def embedded_release_manifest(package_path: Path):
+    try:
+        with zipfile.ZipFile(package_path) as archive:
+            candidates = [name for name in archive.namelist() if name.endswith("/release_manifest.json")]
+            if not candidates:
+                return {}
+            with archive.open(candidates[0]) as handle:
+                return json.loads(handle.read().decode("utf-8"))
+    except Exception:
+        return {}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", default="musticode187/automation-suite-updates")
@@ -48,15 +61,26 @@ def main() -> int:
 
     modules = {}
     for module_id, asset_name, package_path in args.modules:
-        modules[module_id] = {
+        embedded = embedded_release_manifest(package_path)
+        module = {
             "label": LABELS.get(module_id, module_id),
             "version": args.tag,
             "asset_name": asset_name,
             "url": download_url(args.repo, asset_name),
             "sha256": sha256(package_path),
             "size_bytes": package_path.stat().st_size,
-            "source_package": package_path.name,
+            "source_package": embedded.get("zip_file") or package_path.name,
         }
+        for target_key, source_key in [
+            ("source_commit", "commit"),
+            ("source_branch", "branch"),
+            ("source_repo_url", "repo_url"),
+            ("source_built_at", "built_at"),
+            ("source_package_kind", "package_kind"),
+        ]:
+            if embedded.get(source_key):
+                module[target_key] = embedded[source_key]
+        modules[module_id] = module
 
     payload = {
         "schema": "automation.update_feed.v1",
@@ -76,4 +100,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
