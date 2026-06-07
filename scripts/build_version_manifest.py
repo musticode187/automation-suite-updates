@@ -9,6 +9,8 @@ from pathlib import Path
 
 LABELS = {
     "beilagen-video": "Beilagen-Video",
+    "beilagen-video-mac": "Beilagen-Video macOS",
+    "beilagen-video-windows": "Beilagen-Video Windows",
     "produktclips": "Produktclips",
     "newsletter-grafiken": "Newsletter-Grafiken",
 }

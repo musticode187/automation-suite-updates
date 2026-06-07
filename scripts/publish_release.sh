@@ -11,26 +11,16 @@ DRY_RUN=0
 
 for arg in "$@"; do
   case "$arg" in
-    --dry-run)
-      DRY_RUN=1
-      ;;
-    *)
-      echo "Unknown argument: $arg" >&2
-      echo "Usage: $0 [--dry-run]" >&2
-      exit 2
-      ;;
+    --dry-run) DRY_RUN=1 ;;
+    *) echo "Unknown argument: $arg" >&2; echo "Usage: $0 [--dry-run]" >&2; exit 2 ;;
   esac
 done
 
 latest_zip(){
   local dir="$1"
   local pattern="$2"
-  if [ ! -d "$dir" ]; then
-    return 1
-  fi
-  find "$dir" -maxdepth 1 -type f -name "$pattern" -print0 \
-    | xargs -0 ls -t 2>/dev/null \
-    | head -n 1
+  [ -d "$dir" ] || return 1
+  find "$dir" -maxdepth 1 -type f -name "$pattern" -print0 | xargs -0 ls -t 2>/dev/null | head -n 1
 }
 
 zip_contains(){
@@ -68,45 +58,31 @@ if [ -f "$MAC_BEILAGEN_ZIP" ]; then
   )
 else
   echo "WARN: mac beilagen-package not found: ${MAC_BEILAGEN_ZIP}" >&2
-  if [ "$SKIP_MISSING_ZIPS" != "1" ]; then
-    exit 1
-  fi
+  [ "$SKIP_MISSING_ZIPS" = "1" ] || exit 1
 fi
 
 if [ -f "$WINDOWS_BEILAGEN_ZIP" ] && zip_contains "$WINDOWS_BEILAGEN_ZIP" "app/Beilagen-Video/Beilagen-Video.exe"; then
   cp "$WINDOWS_BEILAGEN_ZIP" "$ASSETS_DIR/beilagen-video-windows_latest.zip"
-  MODULE_ARGS+=(
-    "beilagen-video-windows:beilagen-video-windows_latest.zip:$ASSETS_DIR/beilagen-video-windows_latest.zip"
-  )
+  MODULE_ARGS+=("beilagen-video-windows:beilagen-video-windows_latest.zip:$ASSETS_DIR/beilagen-video-windows_latest.zip")
 else
   echo "WARN: windows beilagen-package missing or incomplete: ${WINDOWS_BEILAGEN_ZIP}" >&2
-  if [ "$SKIP_MISSING_ZIPS" != "1" ]; then
-    exit 1
-  fi
+  [ "$SKIP_MISSING_ZIPS" = "1" ] || exit 1
 fi
 
 if [ -f "$PRODUKTCLIPS_ZIP" ]; then
   cp "$PRODUKTCLIPS_ZIP" "$ASSETS_DIR/produktclips_latest.zip"
-  MODULE_ARGS+=(
-    "produktclips:produktclips_latest.zip:$ASSETS_DIR/produktclips_latest.zip"
-  )
+  MODULE_ARGS+=("produktclips:produktclips_latest.zip:$ASSETS_DIR/produktclips_latest.zip")
 else
   echo "WARN: produktclips-package not found: ${PRODUKTCLIPS_ZIP}" >&2
-  if [ "$SKIP_MISSING_ZIPS" != "1" ]; then
-    exit 1
-  fi
+  [ "$SKIP_MISSING_ZIPS" = "1" ] || exit 1
 fi
 
 if [ -f "$NEWSLETTER_ZIP" ]; then
   cp "$NEWSLETTER_ZIP" "$ASSETS_DIR/newsletter-grafiken_latest.zip"
-  MODULE_ARGS+=(
-    "newsletter-grafiken:newsletter-grafiken_latest.zip:$ASSETS_DIR/newsletter-grafiken_latest.zip"
-  )
+  MODULE_ARGS+=("newsletter-grafiken:newsletter-grafiken_latest.zip:$ASSETS_DIR/newsletter-grafiken_latest.zip")
 else
   echo "WARN: newsletter-package not found: ${NEWSLETTER_ZIP}" >&2
-  if [ "$SKIP_MISSING_ZIPS" != "1" ]; then
-    exit 1
-  fi
+  [ "$SKIP_MISSING_ZIPS" = "1" ] || exit 1
 fi
 
 if [ "${#MODULE_ARGS[@]}" -eq 0 ]; then
@@ -114,9 +90,7 @@ if [ "${#MODULE_ARGS[@]}" -eq 0 ]; then
   exit 1
 fi
 
-if [ "$SKIP_MISSING_ZIPS" = "1" ]; then
-  echo "Publishing subset mode: ${#MODULE_ARGS[@]} module(s)." >&2
-fi
+[ "$SKIP_MISSING_ZIPS" = "1" ] && echo "Publishing subset mode: ${#MODULE_ARGS[@]} module(s)." >&2
 
 python3 "$ROOT_DIR/scripts/build_version_manifest.py" \
   --repo "$REPO" \
@@ -124,10 +98,7 @@ python3 "$ROOT_DIR/scripts/build_version_manifest.py" \
   --output "$ASSETS_DIR/version.json" \
   "${MODULE_ARGS[@]}"
 
-(
-  cd "$ASSETS_DIR"
-  shasum -a 256 *.zip > checksums.sha256
-)
+(cd "$ASSETS_DIR" && shasum -a 256 *.zip > checksums.sha256)
 
 NOTES="$ASSETS_DIR/release_notes.md"
 {
